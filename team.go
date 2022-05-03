@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 const (
@@ -54,15 +55,19 @@ type BillingActive struct {
 
 // AccessLogParameters contains all the parameters necessary (including the optional ones) for a GetAccessLogs() request
 type AccessLogParameters struct {
-	Count int
-	Page  int
+	Count  int
+	Page   int
+	Before time.Time
+	TeamId string
 }
 
 // NewAccessLogParameters provides an instance of AccessLogParameters with all the sane default values set
 func NewAccessLogParameters() AccessLogParameters {
 	return AccessLogParameters{
-		Count: DEFAULT_LOGINS_COUNT,
-		Page:  DEFAULT_LOGINS_PAGE,
+		Count:  DEFAULT_LOGINS_COUNT,
+		Page:   DEFAULT_LOGINS_PAGE,
+		Before: time.Time{},
+		TeamId: "",
 	}
 }
 
@@ -128,6 +133,12 @@ func (api *Client) GetAccessLogsContext(ctx context.Context, params AccessLogPar
 	}
 	if params.Page != DEFAULT_LOGINS_PAGE {
 		values.Add("page", strconv.Itoa(params.Page))
+	}
+	if !params.Before.IsZero() {
+		values.Add("before", strconv.FormatInt(params.Before.Unix(), 10))
+	}
+	if params.TeamId != "" {
+		values.Add("team_id", params.TeamId)
 	}
 
 	response, err := api.accessLogsRequest(ctx, "team.accessLogs", values)
